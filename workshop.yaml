@@ -1,0 +1,43 @@
+- name: Donny Demo
+  hosts: localhost
+  vars:
+    source_repo: https://github.com/oraNod/markdown-source-docs.git
+    source_branch: main
+    source_dir: ./sync/source-docs
+    target_dir: ./sync/small-rye-docs
+  tasks:
+    - name: Clone the source repository
+      ansible.builtin.git:
+        repo: "{{ source_repo }}"
+        dest: "{{ source_dir }}"
+        version: "{{ source_branch }}"
+    - name: Synchronize content
+      ansible.posix.synchronize:
+        src: "{{ source_dir }}"
+        dest: "{{ target_dir }}"
+        delete: true
+        recursive: true
+        rsync_opts:
+          - "--exclude='foo.yaml'"
+          - "--exclude='bar.sh'"
+    - name: Remove the source directory
+      ansible.builtin.file:
+        path: "{{ source_dir }}"
+        state: absent
+    - name: Find markdown files
+      ansible.builtin.find:
+        paths: "{{ target_dir }}"
+        patterns: "*.md"
+        recurse: true
+        file_type: file
+      register: md_files
+    - name: Convert markdown to asciidoc
+      ansible.builtin.shell:
+        cmd: while read i; do kramdoc "$i" -o "${i%.*}.adoc"; done
+        stdin: "{{ item.path }}"
+      loop: "{{ md_files.files }}"
+    - name: Remove the markdown files
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ md_files.files }}"
