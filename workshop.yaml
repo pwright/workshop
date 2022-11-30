@@ -3,8 +3,8 @@
   vars:
     source_repo: https://github.com/oraNod/markdown-source-docs.git
     source_branch: main
-    source_dir: ./sync/source-docs
-    target_dir: ./sync/small-rye-docs
+    source_dir: ../sync/source-docs
+    target_dir: ../sync/small-rye-docs
   tasks:
     - name: Clone the source repository
       ansible.builtin.git:
